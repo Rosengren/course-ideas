@@ -9,9 +9,7 @@ import spark.template.handlebars.HandlebarsTemplateEngine;
 import java.util.HashMap;
 import java.util.Map;
 
-import static spark.Spark.get;
-import static spark.Spark.post;
-import static spark.Spark.staticFileLocation;
+import static spark.Spark.*;
 
 
 /*
@@ -27,9 +25,22 @@ public class Main {
         // IMPORTANT: SimpleCourseIdeaDAO is only for prototyping!
         CourseIdeaDAO dao = new SimpleCourseIdeaDAO();
 
+        before((req, res) -> {
+            if (req.cookie("username") != null) {
+                req.attribute("username", req.cookie("username"));
+            }
+        });
+
+        before("/ideas", (req, res) -> {
+            if (req.attribute("username") == null) {
+               res.redirect("/");
+               halt();
+           }
+        });
+
         get("/", (req, res) -> {
             Map<String, String> model = new HashMap<>();
-            model.put("username", req.cookie("username"));
+            model.put("username", req.attribute("username"));
             return new ModelAndView(model, "index.hbs");
         }, new HandlebarsTemplateEngine());
 
@@ -52,10 +63,14 @@ public class Main {
             String title = req.queryParams("title");
             // TODO:csd - This username is tied to the cookie implementation
             CourseIdea courseIdea = new CourseIdea(title,
-                    req.cookie("username"));
+                    req.attribute("username"));
             dao.add(courseIdea);
             res.redirect("/ideas");
             return null;
+        });
+
+        post("/ideas/:slug/vote", (req, res) -> {
+            CourseIdea idea = dao.findBySlug(req.params("slug"));
         });
     }
 }

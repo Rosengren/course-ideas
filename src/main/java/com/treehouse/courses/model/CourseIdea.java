@@ -1,15 +1,27 @@
 package com.treehouse.courses.model;
 
-/**
- * Created by krosen on 7/27/16.
- */
+import com.github.slugify.Slugify;
+
+import java.io.IOException;
+import java.util.HashSet;
+import java.util.Set;
+
 public class CourseIdea {
+    private String slug;
     private String title;
     private String creator;
+    private Set<String> voters;
 
     public CourseIdea(String title, String creator) {
+        voters = new HashSet<>();
         this.title = title;
         this.creator = creator;
+        try {
+            Slugify slugify = new Slugify();
+            slug = slugify.slugify(title);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     public String getTitle() {
@@ -37,5 +49,17 @@ public class CourseIdea {
         int result = title != null ? title.hashCode() : 0;
         result = 31 * result + (creator != null ? creator.hashCode() : 0);
         return result;
+    }
+
+    public String getSlug() {
+        return slug;
+    }
+
+    public boolean addVoter(String voterUsername) {
+        return voters.add(voterUsername);
+    }
+
+    public int getVoteCount() {
+        return voters.size();
     }
 }
